@@ -37,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Invalid username atau password')),
+          const SnackBar(content: Text('Username atau Password yang dimasukkan salah')),
         );
       }
     }
