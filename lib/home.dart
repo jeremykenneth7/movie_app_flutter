@@ -1,8 +1,10 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
-import 'package:movie_app/details.dart';
-import 'package:movie_app/model/model.dart';
-import 'package:movie_app/services/services.dart';
+import 'package:movie_app/login.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'details.dart';
+import 'model/model.dart';
+import 'services/services.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,10 +20,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
+    super.initState();
+    _checkSession();
     nowShowing = APIservices().getNowShowing();
     upComing = APIservices().getUpComing();
     popularMovies = APIservices().getPopular();
-    super.initState();
+  }
+
+  Future<void> _checkSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final username = prefs.getString('username');
+    final password = prefs.getString('password');
+
+    if (username == null || password == null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginScreen()),
+      );
+    }
   }
 
   void navigateToDetails(Movie movie) {
@@ -33,13 +49,28 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('username');
+    await prefs.remove('password');
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LoginScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Movie App"),
-        leading: const Icon(Icons.menu),
+        title: const Text("Galeri Film"),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _logout,
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: SafeArea(
@@ -48,10 +79,10 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                  child: const Text(
-                    "Now Showing Movies",
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10.0),
+                  child: Text(
+                    "Film terbaru",
                     style: TextStyle(
                       fontWeight: FontWeight.normal,
                       fontSize: 18,
@@ -117,12 +148,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  "Upcoming Movies",
-                  style: TextStyle(
-                    fontWeight: FontWeight.normal,
-                    fontSize: 18,
-                    color: Colors.black,
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10.0),
+                  child: Text(
+                    "Film Pilihan Kami",
+                    style: TextStyle(
+                      fontWeight: FontWeight.normal,
+                      fontSize: 18,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
                 Container(
@@ -184,12 +218,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                const Text(
-                  "  Popular Movies",
-                  style: TextStyle(
-                    fontWeight: FontWeight.normal,
-                    fontSize: 18,
-                    color: Colors.black,
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10.0),
+                  child: Text(
+                    "Film Populer",
+                    style: TextStyle(
+                      fontWeight: FontWeight.normal,
+                      fontSize: 18,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
                 Container(
