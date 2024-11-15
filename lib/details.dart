@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:movie_app/model/model.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 class MovieDetailsScreen extends StatefulWidget {
   final Movie movie;
@@ -14,11 +16,18 @@ class MovieDetailsScreen extends StatefulWidget {
 
 class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
   bool isFavorite = false;
+  String selectedCurrency = 'IDR';
+  double convertedPrice = 45000.0; 
+  final double ticketPrice = 45000.0;
+  String selectedTimeZone = 'WIB';
+  String currentTime = '';
 
   @override
   void initState() {
     super.initState();
     _checkIfFavorite();
+    _convertCurrency();
+    _fetchCurrentTime();
   }
 
   Future<void> _checkIfFavorite() async {
@@ -42,6 +51,67 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
     await prefs.setStringList('favoriteMovies', favoriteMovies);
     setState(() {
       isFavorite = !isFavorite;
+    });
+  }
+
+  Future<void> _convertCurrency() async {
+    if (selectedCurrency == 'IDR') {
+      setState(() {
+        convertedPrice = ticketPrice;
+      });
+      return;
+    }
+
+    final response = await http
+        .get(Uri.parse('https://api.exchangerate-api.com/v4/latest/IDR'));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final rate = data['rates'][selectedCurrency];
+      setState(() {
+        convertedPrice = ticketPrice * rate;
+      });
+    } else {
+      setState(() {
+        convertedPrice = 0.0;
+      });
+    }
+  }
+
+  Future<void> _fetchCurrentTime() async {
+    final response = await http
+        .get(Uri.parse('http://worldtimeapi.org/api/timezone/Asia/Jakarta'));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final DateTime now = DateTime.parse(data['datetime']);
+      _updateTime(now);
+    } else {
+      setState(() {
+        currentTime = 'Error fetching time';
+      });
+    }
+  }
+
+  void _updateTime(DateTime now) {
+    DateTime convertedTime;
+
+    switch (selectedTimeZone) {
+      case 'WITA':
+        convertedTime = now.add(const Duration(hours: 1));
+        break;
+      case 'WIT':
+        convertedTime = now.add(const Duration(hours: 2));
+        break;
+      case 'WIB':
+      default:
+        convertedTime = now;
+        break;
+    }
+
+    final formatter = DateFormat('yyyy-MM-dd HH:mm:ss');
+    setState(() {
+      currentTime = formatter.format(convertedTime);
     });
   }
 
@@ -152,6 +222,92 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
                       fontSize: 16,
                       color: Colors.black54,
                     ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Icon(Icons.price_change,
+                      size: 20, color: Colors.black54),
+                  const SizedBox(width: 5),
+                  const Text(
+                    "Harga Tiket Film : Rp. 45.000",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Icon(Icons.attach_money,
+                      size: 20, color: Colors.black54),
+                  const SizedBox(width: 5),
+                  DropdownButton<String>(
+                    value: selectedCurrency,
+                    items: const [
+                      DropdownMenuItem(value: 'IDR', child: Text('IDR')),
+                      DropdownMenuItem(value: 'USD', child: Text('USD')),
+                      DropdownMenuItem(value: 'EUR', child: Text('EUR')),
+                      DropdownMenuItem(value: 'JPY', child: Text('JPY')),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        selectedCurrency = value!;
+                        _convertCurrency();
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    "Converted Price: $convertedPrice $selectedCurrency",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Icon(Icons.access_time,
+                      size: 20, color: Colors.black54),
+                  const SizedBox(width: 5),
+                  Text(
+                    "Waktu sekarang : $currentTime",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Icon(Icons.access_time,
+                      size: 20, color: Colors.black54),
+                  const SizedBox(width: 5),
+                  DropdownButton<String>(
+                    value: selectedTimeZone,
+                    items: const [
+                      DropdownMenuItem(
+                          value: 'WIB', child: Text('WIB (GMT+7)')),
+                      DropdownMenuItem(
+                          value: 'WITA', child: Text('WITA (GMT+8)')),
+                      DropdownMenuItem(
+                          value: 'WIT', child: Text('WIT (GMT+9)')),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        selectedTimeZone = value!;
+                        _fetchCurrentTime();
+                      });
+                    },
                   ),
                 ],
               ),
