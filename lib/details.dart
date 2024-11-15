@@ -263,7 +263,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
                   ),
                   const SizedBox(width: 5),
                   Text(
-                    "Converted Price: $convertedPrice $selectedCurrency",
+                    "Konversi Mata Uang : $convertedPrice $selectedCurrency",
                     style: const TextStyle(
                       fontSize: 16,
                       color: Colors.black54,
