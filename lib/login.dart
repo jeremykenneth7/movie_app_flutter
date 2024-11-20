@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:movie_app/home.dart';
+import 'package:movie_app/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 
@@ -33,7 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => MainScreen()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
